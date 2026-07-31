@@ -3,73 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Netsorna Admin</title>
+    <title>Netsorna Boutique | Custom Acrylic UV Print Wall Art</title>
     <style>
-        body { font-family: sans-serif; background: #f4f4f9; padding: 20px; display: flex; justify-content: center; }
-        .card { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
-        input, button { width: 100%; padding: 12px; margin-top: 10px; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; }
-        button { background: #000; color: #fff; font-weight: bold; cursor: pointer; border: none; }
-        .error { color: red; font-size: 14px; margin-top: 10px; display: none; }
+        body { font-family: sans-serif; margin: 0; padding: 40px; background: #fafafa; color: #333; text-align: center; }
+        .container { max-width: 600px; margin: 0 auto; background: #fff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        h1 { margin-bottom: 10px; }
+        a.admin-link { display: inline-block; margin-top: 30px; color: #666; text-decoration: none; font-size: 14px; }
+        a.admin-link:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
-
-    <div id="login-box" class="card">
-        <h2>Netsorna Admin Login</h2>
-        <form id="login-form">
-            <input type="password" id="admin-pass" placeholder="Enter Admin Password" required>
-            <button type="submit">Access Dashboard</button>
-        </form>
-        <p id="error-msg" class="error">Incorrect password. Try again.</p>
+    <div class="container">
+        <h1>Netsorna Boutique</h1>
+        <p>Personalized custom acrylic UV print wall art crafted exclusively in South Africa.</p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+        <p>Storefront is live and loading static assets successfully.</p>
+        <a href="/admin/" class="admin-link">🔒 Admin CMS Login</a>
     </div>
-
-    <div id="dashboard" class="card" style="display: none;">
-        <h2>Netsorna CMS Dashboard</h2>
-        <p>Status: Connected securely</p>
-        <hr>
-        <button id="logout-btn" style="background: #666;">Log Out</button>
-    </div>
-
-    <script>
-        const loginForm = document.getElementById('login-form');
-        const loginBox = document.getElementById('login-box');
-        const dashboard = document.getElementById('dashboard');
-        const errorMsg = document.getElementById('error-msg');
-
-        // Session check
-        if (sessionStorage.getItem('netsorna_admin') === 'true') {
-            loginBox.style.display = 'none';
-            dashboard.style.display = 'block';
-        }
-
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            errorMsg.style.display = 'none';
-            const password = document.getElementById('admin-pass').value;
-
-            try {
-                const res = await fetch('/api/admin/auth', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ password })
-                });
-
-                if (res.ok) {
-                    sessionStorage.setItem('netsorna_admin', 'true');
-                    loginBox.style.display = 'none';
-                    dashboard.style.display = 'block';
-                } else {
-                    errorMsg.style.display = 'block';
-                }
-            } catch (err) {
-                alert('Connection error. Please try again.');
-            }
-        });
-
-        document.getElementById('logout-btn').addEventListener('click', () => {
-            sessionStorage.removeItem('netsorna_admin');
-            location.reload();
-        });
-    </script>
 </body>
 </html>
