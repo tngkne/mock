@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Netsorna Admin CMS</title>
+    <style>
+        body { font-family: sans-serif; background: #111; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: #222; padding: 40px; border-radius: 8px; width: 100%; max-width: 380px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+        input, button { width: 100%; padding: 12px; margin-top: 12px; box-sizing: border-box; border-radius: 4px; border: 1px solid #444; background: #333; color: #fff; }
+        button { background: #fff; color: #000; font-weight: bold; cursor: pointer; border: none; }
+        button:hover { background: #ddd; }
+        .error { color: #ff6b6b; font-size: 13px; margin-top: 8px; display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="login-box" class="card">
+        <h2>Admin Portal</h2>
+        <form id="login-form">
+            <input type="password" id="admin-pass" placeholder="Enter Admin Password" required>
+            <button type="submit">Login</button>
+        </form>
+        <p id="error-msg" class="error">Invalid password.</p>
+    </div>
+
+    <div id="dashboard" class="card" style="display: none;">
+        <h2>Netsorna CMS</h2>
+        <p>Status: Authenticated</p>
+        <hr style="border-color: #444;">
+        <button id="logout-btn" style="background: #444; color: #fff;">Log Out</button>
+    </div>
+
+    <script>
+        const loginForm = document.getElementById('login-form');
+        const loginBox = document.getElementById('login-box');
+        const dashboard = document.getElementById('dashboard');
+        const errorMsg = document.getElementById('error-msg');
+
+        if (sessionStorage.getItem('netsorna_auth') === 'true') {
+            loginBox.style.display = 'none';
+            dashboard.style.display = 'block';
+        }
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const password = document.getElementById('admin-pass').value;
+
+            // Simple verification check against environment secret via worker API next
+            if (password === "YOUR_ADMIN_PASSWORD_HERE") { 
+                sessionStorage.setItem('netsorna_auth', 'true');
+                loginBox.style.display = 'none';
+                dashboard.style.display = 'block';
+            } else {
+                errorMsg.style.display = 'block';
+            }
+        });
+
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            sessionStorage.removeItem('netsorna_auth');
+            location.reload();
+        });
+    </script>
+</body>
+</html>
