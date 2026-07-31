@@ -5,30 +5,50 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Netsorna Admin CMS</title>
     <style>
-        body { font-family: sans-serif; background: #111; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .card { background: #222; padding: 40px; border-radius: 8px; width: 100%; max-width: 380px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
-        input, button { width: 100%; padding: 12px; margin-top: 12px; box-sizing: border-box; border-radius: 4px; border: 1px solid #444; background: #333; color: #fff; }
-        button { background: #fff; color: #000; font-weight: bold; cursor: pointer; border: none; }
+        body { font-family: sans-serif; background: #111; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+        .card { background: #222; padding: 30px; border-radius: 8px; width: 100%; max-width: 500px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+        input, textarea, button { width: 100%; padding: 12px; margin-top: 10px; box-sizing: border-box; border-radius: 4px; border: 1px solid #444; background: #333; color: #fff; font-size: 14px; }
+        button { background: #fff; color: #000; font-weight: bold; cursor: pointer; border: none; margin-top: 15px; }
         button:hover { background: #ddd; }
         .error { color: #ff6b6b; font-size: 13px; margin-top: 8px; display: none; }
+        .product-list { margin-top: 20px; max-height: 200px; overflow-y: auto; background: #1a1a1a; padding: 10px; border-radius: 4px; }
+        .product-item { padding: 8px; border-bottom: 1px solid #333; font-size: 13px; display: flex; justify-content: space-between; }
+        .logout-btn { background: #444; color: #fff; margin-top: 20px; }
     </style>
 </head>
 <body>
 
+    <!-- Login Container -->
     <div id="login-box" class="card">
-        <h2>Admin Portal</h2>
+        <h2>Netsorna Admin Login</h2>
         <form id="login-form">
             <input type="password" id="admin-pass" placeholder="Enter Admin Password" required>
-            <button type="submit">Login</button>
+            <button type="submit">Access Dashboard</button>
         </form>
-        <p id="error-msg" class="error">Invalid password.</p>
+        <p id="error-msg" class="error">Incorrect password. Please try again.</p>
     </div>
 
+    <!-- CMS Dashboard Container -->
     <div id="dashboard" class="card" style="display: none;">
-        <h2>Netsorna CMS</h2>
-        <p>Status: Authenticated</p>
-        <hr style="border-color: #444;">
-        <button id="logout-btn" style="background: #444; color: #fff;">Log Out</button>
+        <h2>Netsorna Product CMS</h2>
+        <p style="font-size: 12px; color: #888;">Connected securely to Cloudflare KV</p>
+        <hr style="border-color: #444; margin: 15px 0;">
+
+        <h3>Add New Product</h3>
+        <form id="product-form">
+            <input type="text" id="p-id" placeholder="Product ID (e.g. wall-art-01)" required>
+            <input type="text" id="p-name" placeholder="Product Title (e.g. Custom Acrylic Art)" required>
+            <input type="number" id="p-price" placeholder="Price in ZAR (e.g. 850)" required>
+            <textarea id="p-desc" placeholder="Product Description" rows="2" required></textarea>
+            <button type="submit">Save Product to KV</button>
+        </form>
+
+        <h3 style="margin-top: 25px;">Live Store Products</h3>
+        <div id="product-list" class="product-list">
+            <p style="color: #666; text-align: center;">Loading products...</p>
+        </div>
+
+        <button id="logout-btn" class="logout-btn">Log Out</button>
     </div>
 
     <script>
@@ -36,29 +56,76 @@
         const loginBox = document.getElementById('login-box');
         const dashboard = document.getElementById('dashboard');
         const errorMsg = document.getElementById('error-msg');
+        const productForm = document.getElementById('product-form');
+        const productList = document.getElementById('product-list');
 
+        // Check session on load
         if (sessionStorage.getItem('netsorna_auth') === 'true') {
-            loginBox.style.display = 'none';
-            dashboard.style.display = 'block';
+            showDashboard();
         }
 
+        // Handle Login
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const password = document.getElementById('admin-pass').value;
+            errorMsg.style.display = 'none';
 
-            // Simple verification check against environment secret via worker API next
-            if (password === "YOUR_ADMIN_PASSWORD_HERE") { 
-                sessionStorage.setItem('netsorna_auth', 'true');
-                loginBox.style.display = 'none';
-                dashboard.style.display = 'block';
-            } else {
-                errorMsg.style.display = 'block';
+            try {
+                const response = await fetch('/api/admin/auth', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+
+                if (response.ok) {
+                    sessionStorage.setItem('netsorna_auth', 'true');
+                    showDashboard();
+                } else {
+                    errorMsg.style.display = 'block';
+                }
+            } catch (err) {
+                alert('Connection error. Please check your network.');
             }
         });
 
+        // Handle Logout
         document.getElementById('logout-btn').addEventListener('click', () => {
             sessionStorage.removeItem('netsorna_auth');
             location.reload();
+        });
+
+        function showDashboard() {
+            loginBox.style.display = 'none';
+            dashboard.style.display = 'block';
+            loadProducts();
+        }
+
+        // Fetch products for management view
+        async function loadProducts() {
+            try {
+                const res = await fetch('/api/products');
+                const products = await res.json();
+                
+                if (products.length === 0) {
+                    productList.innerHTML = '<p style="color: #666; text-align: center;">No products found.</p>';
+                    return;
+                }
+
+                productList.innerHTML = products.map(p => `
+                    <div class="product-item">
+                        <span><strong>${p.name}</strong></span>
+                        <span>R ${p.price}</span>
+                    </div>
+                `).join('');
+            } catch (err) {
+                productList.innerHTML = '<p style="color: #ff6b6b; text-align: center;">Failed to load products.</p>';
+            }
+        }
+
+        // Handle Adding Products (Will connect to product save API next)
+        productForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            alert('Product form ready. We will map the save API endpoint next.');
         });
     </script>
 </body>
